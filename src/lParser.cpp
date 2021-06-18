@@ -57,6 +57,7 @@ struct ParseData {
     Turtle turtle;
     std::stack<Turtle> turtleStack;
     uint32_t maxDepth;
+    float defaultAngle;
     std::vector<lParser::Cylinder>* outCyls;
     std::map<char, std::string>* symbolMap;
 };
@@ -66,8 +67,7 @@ bool processRule(const std::string& axiom,
     ParseData* data) {
     Turtle& turtle = data->turtle;
     lParser::Cylinder cylinder;
-    cylinder.width = 1;
-    constexpr float angle = 0.5f * glm::pi<float>();
+    cylinder.width = 0.05;
     for (size_t i = 0; i < axiom.size(); ++i) {
         const char c = axiom[i];
 
@@ -80,22 +80,22 @@ bool processRule(const std::string& axiom,
             data->outCyls->push_back(cylinder);
             break;
         case '+':
-            turtle.rotateArround(angle, turtle.up());
+            turtle.rotateArround(data->defaultAngle, turtle.up());
             break;
         case '-':
-            turtle.rotateArround(-angle, turtle.up());
+            turtle.rotateArround(-data->defaultAngle, turtle.up());
             break;
         case '/':
-            turtle.rotateArround(angle, turtle.forward());
+            turtle.rotateArround(data->defaultAngle, turtle.forward());
             break;
         case '\\':
-            turtle.rotateArround(-angle, turtle.forward());
+            turtle.rotateArround(-data->defaultAngle, turtle.forward());
             break;
         case '&':
-            turtle.rotateArround(angle, turtle.left());
+            turtle.rotateArround(data->defaultAngle, turtle.left());
             break;
         case '^':
-            turtle.rotateArround(-angle, turtle.left());
+            turtle.rotateArround(-data->defaultAngle, turtle.left());
             break;
         case '|':
             turtle.rotateArround(glm::pi<float>(), turtle.left());
@@ -151,6 +151,7 @@ bool lParser::parse(const LParserInfo& info, LParserOut* out, std::string* outEr
     parseData.maxDepth = info.maxRecursionLevel;
     parseData.outCyls = &out->cylinders;
     parseData.symbolMap = &symbolMap;
+    parseData.defaultAngle = glm::radians(info.defaultAngle);
 
     return processRule(info.axiom, 0, &parseData);
 }

@@ -17,6 +17,7 @@ struct LParserInfo
 	std::vector<std::pair<std::string, double>> constants;
 	std::vector<Rule> rules;
 	uint32_t maxRecursionLevel = 0;
+	float defaultAngle = 20.0f;
 };
 
 struct Cylinder {

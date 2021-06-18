@@ -9,6 +9,7 @@
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include "lParser.hpp"
 #include "Renderer.hpp"
@@ -61,7 +62,8 @@ void showParserInfo(lParser::LParserInfo* info) {
 
     // recursion level
     ImGui::InputScalar("Max Recursion", ImGuiDataType_U32, (void*)&info->maxRecursionLevel, &step, nullptr, "%d");
-
+    // Default Angle
+    ImGui::InputFloat("Default Angle", &info->defaultAngle);
     ImGui::InputText("Axiom", &info->axiom);
 
     if (ImGui::TreeNode("Rules")) {
@@ -75,8 +77,8 @@ void showParserInfo(lParser::LParserInfo* info) {
             ImGuiTableFlags_BordersOuter |
             ImGuiTableFlags_BordersV |
             ImGuiTableFlags_ContextMenuInBody;
-        if (ImGui::BeginTable("TableConstants", 2, flags)) {
-            ImGui::TableSetupColumn("Id", ImGuiTableColumnFlags_WidthFixed, ImGui::GetContentRegionAvail().x * 0.2f);
+        if (ImGui::BeginTable("TableRules", 2, flags)) {
+            ImGui::TableSetupColumn("Id", ImGuiTableColumnFlags_WidthFixed, ImGui::GetFontSize() * 2.f);
             ImGui::TableSetupColumn("Mapping");
             ImGui::TableHeadersRow();
             for (uint32_t i = 0; i < size; ++i) {
@@ -111,6 +113,9 @@ void mainLoop(GLFWwindow* window) {
     std::string errorString;
     Renderer renderer;
     Camera camera;
+    float scale = 1.0f;
+    float cylinderWidthMultiplier = 1.0f;;
+    uint32_t renderMode = 0;
 
     while (!glfwWindowShouldClose(window))
     {
@@ -148,8 +153,26 @@ void mainLoop(GLFWwindow* window) {
             }
 
             ImGui::Separator();
-            ImGui::Text("Debug");
+            ImGui::Text("Render Configuration");
+            const char* modes[] = { "Lines", "Cylinders" };
+            if (ImGui::BeginCombo("Render Mode", modes[renderMode])) {
+                for (uint32_t i = 0; i < 2; ++i) {
+                    const bool is_selected = (renderMode == i);
+                    if (ImGui::Selectable(modes[i], is_selected)) {
+                        renderMode = i;
+                    }
+                    // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                    if (is_selected) {
+                        ImGui::SetItemDefaultFocus();
+                    }
+                }
+                ImGui::EndCombo();
+            }
             ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+            ImGui::InputFloat("Model Scale", &scale, 0.01f);
+            if (ImGui::InputFloat("Cylinder width scale", &cylinderWidthMultiplier, 0.01f, .0f, "%.3f", 0)) {
+                renderer.setCylinderScale(cylinderWidthMultiplier);
+            }
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             if (ImGui::TreeNode("Camera Info")) {
                 camera.renderImGui();
@@ -170,7 +193,7 @@ void mainLoop(GLFWwindow* window) {
         glClearColor(clear_color.x, clear_color.y, clear_color.z, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        renderer.render(camera.getProjView());
+        renderer.render(glm::scale(camera.getProjView(), glm::vec3(scale)), renderMode);
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
