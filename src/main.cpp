@@ -4,10 +4,15 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+#include <imgui_stdlib.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
+
+#include "lParser.hpp"
+#include "Renderer.hpp"
+#include "Camera.hpp"
 
 
 static void glfw_error_callback(int error, const char* description)
@@ -16,10 +21,96 @@ static void glfw_error_callback(int error, const char* description)
 }
 
 
+void showParserInfo(lParser::LParserInfo* info) {
+    ImGui::PushID("showParseInfo");
+    int32_t step = 1;
+    if (ImGui::TreeNode("Constants")) {
+        uint32_t size = (uint32_t)info->constants.size();
+        ImGui::InputScalar("##nConstants", ImGuiDataType_U32, (void*)&size, &step, nullptr, "%d");
+        if (size != (uint32_t)info->constants.size()) {
+            info->constants.resize(size);
+        }
+        const ImGuiTableFlags flags = ImGuiTableFlags_SizingStretchSame | 
+            ImGuiTableFlags_Resizable |
+            ImGuiTableFlags_BordersOuter |
+            ImGuiTableFlags_BordersV |
+            ImGuiTableFlags_ContextMenuInBody;
+        if (ImGui::BeginTable("TableConstants", 2, flags)) {
+            ImGui::TableSetupColumn("Constant Id");
+            ImGui::TableSetupColumn("Value");
+            ImGui::TableHeadersRow();
+            for (uint32_t i = 0; i < size; ++i) {
+                ImGui::TableNextRow();
+                if (i == 0) {
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::PushItemWidth(-FLT_MIN);
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::PushItemWidth(-FLT_MIN);
+                }
+                ImGui::PushID(i);
+                ImGui::TableSetColumnIndex(0);
+                ImGui::InputText("##constId", &info->constants[i].first);
+                ImGui::TableNextColumn();
+                ImGui::InputDouble("##constDouble", &info->constants[i].second, 1.0);
+            }
+
+            ImGui::EndTable();
+        }
+        ImGui::TreePop();
+    }
+
+    // recursion level
+    ImGui::InputScalar("Max Recursion", ImGuiDataType_U32, (void*)&info->maxRecursionLevel, &step, nullptr, "%d");
+
+    ImGui::InputText("Axiom", &info->axiom);
+
+    if (ImGui::TreeNode("Rules")) {
+        uint32_t size = (uint32_t)info->rules.size();
+        ImGui::InputScalar("##nConstants", ImGuiDataType_U32, (void*)&size, &step, nullptr, "%d");
+        if (size != (uint32_t)info->rules.size()) {
+            info->rules.resize(size);
+        }
+        const ImGuiTableFlags flags = ImGuiTableFlags_SizingStretchSame |
+            ImGuiTableFlags_Resizable |
+            ImGuiTableFlags_BordersOuter |
+            ImGuiTableFlags_BordersV |
+            ImGuiTableFlags_ContextMenuInBody;
+        if (ImGui::BeginTable("TableConstants", 2, flags)) {
+            ImGui::TableSetupColumn("Id", ImGuiTableColumnFlags_WidthFixed, ImGui::GetContentRegionAvail().x * 0.2f);
+            ImGui::TableSetupColumn("Mapping");
+            ImGui::TableHeadersRow();
+            for (uint32_t i = 0; i < size; ++i) {
+                ImGui::TableNextRow();
+                if (i == 0) {
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::PushItemWidth(-FLT_MIN);
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::PushItemWidth(-FLT_MIN);
+                }
+                ImGui::PushID(i);
+                ImGui::TableSetColumnIndex(0);
+                ImGui::InputText("##idRule", &info->rules[i].id);
+                ImGui::TableNextColumn();
+                ImGui::InputText("##mapRule", &info->rules[i].mapping);
+                ImGui::PopID();
+            }
+
+            ImGui::EndTable();
+        }
+        ImGui::TreePop();
+    }
+
+    ImGui::PopID();
+}
 
 void mainLoop(GLFWwindow* window) {
     glm::vec3 clear_color = glm::vec3(0.45f, 0.55f, 0.60f);
     bool show_demo_window = true;
+    lParser::LParserInfo parserInfo;
+    lParser::LParserOut parserOut;
+    std::string errorString;
+    Renderer renderer;
+    Camera camera;
 
     while (!glfwWindowShouldClose(window))
     {
@@ -44,11 +135,32 @@ void mainLoop(GLFWwindow* window) {
 
             ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
 
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+            showParserInfo(&parserInfo);
+            ImGui::Separator();
+            if (ImGui::Button("Parse")) {
+                bool ret = lParser::parse(parserInfo, &parserOut, &errorString);
+                if (!ret) {
+                    std::cerr << "Error when parsing: " << errorString << std::endl;
+                    errorString.clear();
+                }
 
+                renderer.setupPrimitivesToRender(parserOut.cylinders);
+            }
+
+            ImGui::Separator();
+            ImGui::Text("Debug");
+            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            if (ImGui::TreeNode("Camera Info")) {
+                camera.renderImGui();
+                ImGui::TreePop();
+            }
+
         }
         ImGui::End();
+
+        // Camera update
+        camera.update();
 
         // Rendering
         ImGui::Render();
@@ -57,6 +169,9 @@ void mainLoop(GLFWwindow* window) {
         glViewport(0, 0, display_w, display_h);
         glClearColor(clear_color.x, clear_color.y, clear_color.z, 1);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        renderer.render(camera.getProjView());
+
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         glfwSwapBuffers(window);

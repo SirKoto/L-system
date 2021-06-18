@@ -7,7 +7,10 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 set(SOURCES 
-    src/main.cpp)
+    src/main.cpp
+	src/lParser.cpp
+	src/Renderer.cpp
+	src/Camera.cpp)
 
 
 
