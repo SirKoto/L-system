@@ -28,9 +28,9 @@ struct Turtle {
         return glm::rotate(rotation, glm::vec3(0.f, 1.f, 0.f));
     }
 
-    glm::vec3 right() const
+    glm::vec3 left() const
     {
-        return glm::rotate(rotation, glm::vec3(1.f, 0.f, 0.f));
+        return glm::rotate(rotation, glm::vec3(-1.f, 0.f, 0.f));
     }
 
     glm::vec3 up() const
@@ -67,6 +67,7 @@ bool processRule(const std::string& axiom,
     Turtle& turtle = data->turtle;
     lParser::Cylinder cylinder;
     cylinder.width = 1;
+    constexpr float angle = 0.5f * glm::pi<float>();
     for (size_t i = 0; i < axiom.size(); ++i) {
         const char c = axiom[i];
 
@@ -78,14 +79,47 @@ bool processRule(const std::string& axiom,
             cylinder.end = turtle.pos;
             data->outCyls->push_back(cylinder);
             break;
+        case '+':
+            turtle.rotateArround(angle, turtle.up());
+            break;
+        case '-':
+            turtle.rotateArround(-angle, turtle.up());
+            break;
+        case '/':
+            turtle.rotateArround(angle, turtle.forward());
+            break;
+        case '\\':
+            turtle.rotateArround(-angle, turtle.forward());
+            break;
+        case '&':
+            turtle.rotateArround(angle, turtle.left());
+            break;
+        case '^':
+            turtle.rotateArround(-angle, turtle.left());
+            break;
+        case '|':
+            turtle.rotateArround(glm::pi<float>(), turtle.left());
+            break;
+        case '[':
+            data->turtleStack.push(data->turtle);
+            break;
+        case ']':
+            if (data->turtleStack.empty()) {
+                return false;
+            }
+            data->turtle = data->turtleStack.top();
+            data->turtleStack.pop();
+            break;
         default:
+            break;
+        }
+
+        if (std::isalpha(c) && depth < data->maxDepth) {
             std::map<char, std::string>::const_iterator it = data->symbolMap->find(c);
-            if (depth < data->maxDepth &&
-                it != data->symbolMap->end()) {
+            if (it != data->symbolMap->end()) {
                 bool ret = processRule(it->second, depth + 1, data);
                 if (!ret) return false;
             }
-            break;
         }
     }
 

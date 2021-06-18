@@ -21,18 +21,20 @@ void Camera::update()
 	if (io.MouseDown[ImGuiMouseButton_Right]) {
 
 		// Keyboard
-		float speed = mSpeed * io.DeltaTime;
-		if (io.KeysDown[GLFW_KEY_W]) {
-			mPosition += mFront * speed;
-		}
-		if (io.KeysDown[GLFW_KEY_S]) {
-			mPosition -= mFront * speed;
-		}
-		if (io.KeysDown[GLFW_KEY_D]) {
-			mPosition += mRight * speed;
-		}
-		if (io.KeysDown[GLFW_KEY_A]) {
-			mPosition -= mRight * speed;
+		if (!io.WantCaptureKeyboard) {
+			float speed = mSpeed * io.DeltaTime;
+			if (io.KeysDown[GLFW_KEY_W]) {
+				mPosition += mFront * speed;
+			}
+			if (io.KeysDown[GLFW_KEY_S]) {
+				mPosition -= mFront * speed;
+			}
+			if (io.KeysDown[GLFW_KEY_D]) {
+				mPosition += mRight * speed;
+			}
+			if (io.KeysDown[GLFW_KEY_A]) {
+				mPosition -= mRight * speed;
+			}
 		}
 
 		// Mouse
