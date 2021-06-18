@@ -1,19 +1,12 @@
 #include "lParser.hpp"
 
 #include <map>
+#include <unordered_map>
 #include <memory>
 #include <cctype>
 #include <glm/gtx/quaternion.hpp>
 #include <stack>
-
-struct Node {
-    std::unique_ptr<Node> brother;
-    std::unique_ptr<Node> son;
-    double value;
-    enum class Op {
-        eValue
-    };
-};
+#include <cstdlib>
 
 struct Turtle {
     glm::vec3 pos = glm::vec3(0);
@@ -60,14 +53,55 @@ struct ParseData {
     float defaultAngle;
     std::vector<lParser::Cylinder>* outCyls;
     std::map<char, std::string>* symbolMap;
+    std::unordered_map<std::string, float>* constantsMap;
 };
+
+float checkIfCustomValue(const std::string& axiom, const ParseData* data, float default, size_t* i_,
+    bool* error, std::string* outErr) {
+    size_t i = *i_;
+    if (axiom.size() <= i + 1 || axiom[i + 1] != '(') {
+        return default;
+    }
+
+    // We know that at i+1 there is an (
+    size_t j = axiom.find(')', i + 2);
+    if (j == std::string::npos) {
+        *error |= true;
+        *outErr = "Can't find closing )";
+        return default;
+    }
+
+    float val;
+    // is constant or value?
+    if (std::isalpha(axiom[i + 2])) {
+        std::string id = axiom.substr(i + 2, j - (i + 2));
+        auto it = data->constantsMap->find(id);
+        if (it == data->constantsMap->end()) {
+            *error |= true;
+            *outErr = "Can't find constant " + id;
+            val = default;
+        }
+        else {
+            val = it->second;
+        }
+    }
+    else { // it is a value
+        val = std::strtof(axiom.c_str() + i + 2, nullptr);
+    }
+    
+    (*i_) = j;
+    return val;
+}
 
 bool processRule(const std::string& axiom,
     const uint32_t depth,
-    ParseData* data) {
+    ParseData* data,
+    std::string* outErr) {
     Turtle& turtle = data->turtle;
     lParser::Cylinder cylinder;
-    cylinder.width = 0.05;
+    cylinder.width = 0.05f;
+    bool error = false;
+    float value;
     for (size_t i = 0; i < axiom.size(); ++i) {
         const char c = axiom[i];
 
@@ -80,22 +114,28 @@ bool processRule(const std::string& axiom,
             data->outCyls->push_back(cylinder);
             break;
         case '+':
-            turtle.rotateArround(data->defaultAngle, turtle.up());
+            value = checkIfCustomValue(axiom, data, data->defaultAngle, &i, &error, outErr);
+            turtle.rotateArround(glm::radians(value), turtle.up());
             break;
         case '-':
-            turtle.rotateArround(-data->defaultAngle, turtle.up());
+            value = checkIfCustomValue(axiom, data, data->defaultAngle, &i, &error, outErr);
+            turtle.rotateArround(-glm::radians(value), turtle.up());
             break;
         case '/':
-            turtle.rotateArround(data->defaultAngle, turtle.forward());
+            value = checkIfCustomValue(axiom, data, data->defaultAngle, &i, &error, outErr);
+            turtle.rotateArround(glm::radians(value), turtle.forward());
             break;
         case '\\':
-            turtle.rotateArround(-data->defaultAngle, turtle.forward());
+            value = checkIfCustomValue(axiom, data, data->defaultAngle, &i, &error, outErr);
+            turtle.rotateArround(-glm::radians(value), turtle.forward());
             break;
         case '&':
-            turtle.rotateArround(data->defaultAngle, turtle.left());
+            value = checkIfCustomValue(axiom, data, data->defaultAngle, &i, &error, outErr);
+            turtle.rotateArround(glm::radians(value), turtle.left());
             break;
         case '^':
-            turtle.rotateArround(-data->defaultAngle, turtle.left());
+            value = checkIfCustomValue(axiom, data, data->defaultAngle, &i, &error, outErr);
+            turtle.rotateArround(-glm::radians(value), turtle.left());
             break;
         case '|':
             turtle.rotateArround(glm::pi<float>(), turtle.left());
@@ -105,6 +145,7 @@ bool processRule(const std::string& axiom,
             break;
         case ']':
             if (data->turtleStack.empty()) {
+                *outErr = "Can't find closing ]";
                 return false;
             }
             data->turtle = data->turtleStack.top();
@@ -114,10 +155,14 @@ bool processRule(const std::string& axiom,
             break;
         }
 
+        if (error) {
+            return false;
+        }
+
         if (std::isalpha(c) && depth < data->maxDepth) {
             std::map<char, std::string>::const_iterator it = data->symbolMap->find(c);
             if (it != data->symbolMap->end()) {
-                bool ret = processRule(it->second, depth + 1, data);
+                bool ret = processRule(it->second, depth + 1, data, outErr);
                 if (!ret) return false;
             }
         }
@@ -147,11 +192,16 @@ bool lParser::parse(const LParserInfo& info, LParserOut* out, std::string* outEr
         symbolMap.emplace(rule.id.front(), rule.mapping);
     }
 
+    std::unordered_map<std::string, float> constantsMap;
+    for (const auto& c : info.constants) {
+        constantsMap.emplace(c.first, c.second);
+    }
+
     ParseData parseData;
     parseData.maxDepth = info.maxRecursionLevel;
     parseData.outCyls = &out->cylinders;
     parseData.symbolMap = &symbolMap;
-    parseData.defaultAngle = glm::radians(info.defaultAngle);
-
-    return processRule(info.axiom, 0, &parseData);
+    parseData.defaultAngle = info.defaultAngle;
+    parseData.constantsMap = &constantsMap;
+    return processRule(info.axiom, 0, &parseData, outErr);
 }

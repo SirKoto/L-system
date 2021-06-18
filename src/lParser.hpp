@@ -14,7 +14,7 @@ struct Rule {
 struct LParserInfo
 {
 	std::string axiom;
-	std::vector<std::pair<std::string, double>> constants;
+	std::vector<std::pair<std::string, float>> constants;
 	std::vector<Rule> rules;
 	uint32_t maxRecursionLevel = 0;
 	float defaultAngle = 20.0f;

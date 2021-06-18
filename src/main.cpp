@@ -52,7 +52,8 @@ void showParserInfo(lParser::LParserInfo* info) {
                 ImGui::TableSetColumnIndex(0);
                 ImGui::InputText("##constId", &info->constants[i].first);
                 ImGui::TableNextColumn();
-                ImGui::InputDouble("##constDouble", &info->constants[i].second, 1.0);
+                ImGui::InputFloat("##constDouble", &info->constants[i].second, 1.0);
+                ImGui::PopID();
             }
 
             ImGui::EndTable();
