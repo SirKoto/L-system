@@ -21,6 +21,15 @@ static void glfw_error_callback(int error, const char* description)
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
+void loadExampleAlgae(lParser::LParserInfo* info) {
+    info->axiom = "F";
+    info->constants = {};
+    info->rules = { {"F", "FF>-[F&+F+F]+[+F^-F-F]"} };
+    info->maxRecursionLevel = 5;
+    info->defaultAngle = 20.0f;
+    info->defaultThickness = 0.3f;
+    info->thicknessReductionFactor = 0.98f;
+}
 
 void showParserInfo(lParser::LParserInfo* info) {
     ImGui::PushID("showParseInfo");
@@ -147,7 +156,20 @@ void mainLoop(GLFWwindow* window) {
 
             showParserInfo(&parserInfo);
             ImGui::Separator();
+            bool parse = false;
             if (ImGui::Button("Parse")) {
+                parse = true;
+            }
+            ImGui::Separator();
+            if (ImGui::TreeNode("Examples")) {
+                if (ImGui::Button("Algae")) {
+                    loadExampleAlgae(&parserInfo);
+                    parse = true;
+                }
+                ImGui::TreePop();
+            }
+
+            if (parse) {
                 bool ret = lParser::parse(parserInfo, &parserOut, &errorString);
                 if (!ret) {
                     std::cerr << "Error when parsing: " << errorString << std::endl;
