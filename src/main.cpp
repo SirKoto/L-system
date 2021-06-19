@@ -65,6 +65,8 @@ void showParserInfo(lParser::LParserInfo* info) {
     ImGui::InputScalar("Max Recursion", ImGuiDataType_U32, (void*)&info->maxRecursionLevel, &step, nullptr, "%d");
     // Default Angle
     ImGui::InputFloat("Default Angle", &info->defaultAngle);
+    ImGui::InputFloat("Default Thickness", &info->defaultThickness);
+    ImGui::InputFloat("Thickness reduction factor", &info->thicknessReductionFactor);
     ImGui::InputText("Axiom", &info->axiom);
 
     if (ImGui::TreeNode("Rules")) {
@@ -117,6 +119,8 @@ void mainLoop(GLFWwindow* window) {
     float scale = 1.0f;
     float cylinderWidthMultiplier = 1.0f;;
     uint32_t renderMode = 0;
+
+    glEnable(GL_MULTISAMPLE);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -174,6 +178,15 @@ void mainLoop(GLFWwindow* window) {
             if (ImGui::InputFloat("Cylinder width scale", &cylinderWidthMultiplier, 0.01f, .0f, "%.3f", 0)) {
                 renderer.setCylinderScale(cylinderWidthMultiplier);
             }
+            bool v;
+            if(ImGui::Checkbox("Antialiasing", &v)) {
+                if (v) {
+                    glEnable(GL_MULTISAMPLE);
+                }
+                else {
+                    glDisable(GL_MULTISAMPLE);
+                }
+            }
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             if (ImGui::TreeNode("Camera Info")) {
                 camera.renderImGui();
@@ -214,6 +227,7 @@ int main() {
         const char* glsl_version = "#version 130";
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_SAMPLES, 4);
 
         window = glfwCreateWindow(1280, 720, "L-systems project", NULL, NULL);
         if (window == NULL)

@@ -11,6 +11,7 @@
 struct Turtle {
     glm::vec3 pos = glm::vec3(0);
     glm::quat rotation = glm::quat(1.f, glm::vec3(0.f));
+    float thickness = 0.05f;
 
     void advance(float t) {
         pos += t * this->forward();
@@ -51,6 +52,7 @@ struct ParseData {
     std::stack<Turtle> turtleStack;
     uint32_t maxDepth;
     float defaultAngle;
+    float thicknessReductionFactor;
     std::vector<lParser::Cylinder>* outCyls;
     std::map<char, std::string>* symbolMap;
     std::unordered_map<std::string, float>* constantsMap;
@@ -99,7 +101,6 @@ bool processRule(const std::string& axiom,
     std::string* outErr) {
     Turtle& turtle = data->turtle;
     lParser::Cylinder cylinder;
-    cylinder.width = 0.05f;
     bool error = false;
     float value;
     for (size_t i = 0; i < axiom.size(); ++i) {
@@ -108,6 +109,7 @@ bool processRule(const std::string& axiom,
         switch (c)
         {
         case 'F':
+            cylinder.width = turtle.thickness;
             cylinder.init = turtle.pos;
             turtle.advance(1.0f);
             cylinder.end = turtle.pos;
@@ -150,6 +152,12 @@ bool processRule(const std::string& axiom,
             }
             data->turtle = data->turtleStack.top();
             data->turtleStack.pop();
+            break;
+        case '<':
+            data->turtle.thickness /= data->thicknessReductionFactor;
+            break;
+        case '>':
+            data->turtle.thickness *= data->thicknessReductionFactor;
             break;
         default:
             break;
@@ -203,5 +211,7 @@ bool lParser::parse(const LParserInfo& info, LParserOut* out, std::string* outEr
     parseData.symbolMap = &symbolMap;
     parseData.defaultAngle = info.defaultAngle;
     parseData.constantsMap = &constantsMap;
+    parseData.thicknessReductionFactor = info.thicknessReductionFactor;
+    parseData.turtle.thickness = info.defaultThickness;
     return processRule(info.axiom, 0, &parseData, outErr);
 }

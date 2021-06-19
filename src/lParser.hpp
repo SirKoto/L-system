@@ -18,6 +18,8 @@ struct LParserInfo
 	std::vector<Rule> rules;
 	uint32_t maxRecursionLevel = 0;
 	float defaultAngle = 20.0f;
+	float defaultThickness = 0.05f;
+	float thicknessReductionFactor = 0.707f;
 };
 
 struct Cylinder {
