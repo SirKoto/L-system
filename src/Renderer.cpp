@@ -74,6 +74,7 @@ static const char* GEOMETRY_SHADER_C =
 	"in VS_OUT {\n"
 	"	float width;\n"
 	"} gs_in[];\n"
+	"out vec3 normal;\n"
 	"vec3 createPerp(vec3 p1, vec3 p2)"
 	"{"
 	"	vec3 invec = normalize(p2 - p1);"
@@ -95,7 +96,7 @@ static const char* GEOMETRY_SHADER_C =
 	"for (int i = 0; i < segs; i++) {"
 	"	float a = i / float(segs - 1) * 2.0 * 3.14159;"
 	"	float ca = cos(a); float sa = sin(a);"
-	"	vec3 normal = vec3(ca * perpx.x + sa * perpy.x,"
+	"	normal = vec3(ca * perpx.x + sa * perpy.x,"
 	"		ca * perpx.y + sa * perpy.y,"
 	"		ca * perpx.z + sa * perpy.z);"
 	"	vec3 p1 = gl_in[0].gl_Position.xyz + r1 * normal;"
@@ -109,9 +110,10 @@ static const char* GEOMETRY_SHADER_C =
 static const char* FRAGMENT_SHADER_C =
 	"#version 330 core\n"
 	"out vec4 FragColor;\n"
+	"in vec3 normal;\n"
 	"void main()\n"
 	"{\n"
-	"	FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n"
+	"	FragColor = vec4(.5+.5*normal,1);\n"
 	"}\n";
 
 

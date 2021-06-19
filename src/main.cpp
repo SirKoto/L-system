@@ -170,7 +170,7 @@ void mainLoop(GLFWwindow* window) {
                 ImGui::EndCombo();
             }
             ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-            ImGui::InputFloat("Model Scale", &scale, 0.01f);
+            ImGui::InputFloat("Model Scale", &scale, 0.01f,0.0f, "%.5f");
             if (ImGui::InputFloat("Cylinder width scale", &cylinderWidthMultiplier, 0.01f, .0f, "%.3f", 0)) {
                 renderer.setCylinderScale(cylinderWidthMultiplier);
             }
@@ -192,10 +192,11 @@ void mainLoop(GLFWwindow* window) {
         glfwGetFramebufferSize(window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
         glClearColor(clear_color.x, clear_color.y, clear_color.z, 1);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        glEnable(GL_DEPTH_TEST);
         renderer.render(glm::scale(camera.getProjView(), glm::vec3(scale)), renderMode);
-
+        glDisable(GL_DEPTH_TEST);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         glfwSwapBuffers(window);
