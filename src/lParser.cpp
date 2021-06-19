@@ -7,6 +7,7 @@
 #include <glm/gtx/quaternion.hpp>
 #include <stack>
 #include <cstdlib>
+#include <cmath>
 
 struct Turtle {
     glm::vec3 pos = glm::vec3(0);
@@ -35,8 +36,8 @@ struct Turtle {
     void rotateArround(float angle, glm::vec3 axis)
     {
         //angle = std::fmod(angle, 
-        float sinA = std::sinf(angle * 0.5f);
-        float cosA = std::cosf(angle * 0.5f);
+        float sinA = std::sin(angle * 0.5f);
+        float cosA = std::cos(angle * 0.5f);
         rotation = glm::quat(cosA, axis * sinA) * rotation;
 
         // normalize if needed
@@ -58,11 +59,11 @@ struct ParseData {
     std::unordered_map<std::string, float>* constantsMap;
 };
 
-float checkIfCustomValue(const std::string& axiom, const ParseData* data, float default, size_t* i_,
+float checkIfCustomValue(const std::string& axiom, const ParseData* data, float defaultValue, size_t* i_,
     bool* error, std::string* outErr) {
     size_t i = *i_;
     if (axiom.size() <= i + 1 || axiom[i + 1] != '(') {
-        return default;
+        return defaultValue;
     }
 
     // We know that at i+1 there is an (
@@ -70,7 +71,7 @@ float checkIfCustomValue(const std::string& axiom, const ParseData* data, float 
     if (j == std::string::npos) {
         *error |= true;
         *outErr = "Can't find closing )";
-        return default;
+        return defaultValue;
     }
 
     float val;
@@ -81,7 +82,7 @@ float checkIfCustomValue(const std::string& axiom, const ParseData* data, float 
         if (it == data->constantsMap->end()) {
             *error |= true;
             *outErr = "Can't find constant " + id;
-            val = default;
+            val = defaultValue;
         }
         else {
             val = it->second;

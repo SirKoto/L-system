@@ -24,6 +24,6 @@ find_package(glfw3 3.3 REQUIRED)
 
 add_subdirectory(libs)
 
-target_link_libraries(${PROJECT_NAME}
-	glfw glad ImGui glm
+target_link_libraries(${PROJECT_NAME} PRIVATE
+	glfw glad ImGui glm ${CMAKE_DL_LIBS}
 )
