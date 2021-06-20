@@ -155,10 +155,12 @@ bool processRule(const std::string& axiom,
             data->turtleStack.pop();
             break;
         case '<':
-            data->turtle.thickness /= data->thicknessReductionFactor;
+            value = checkIfCustomValue(axiom, data, data->thicknessReductionFactor, &i, &error, outErr);
+            data->turtle.thickness /= value;
             break;
         case '>':
-            data->turtle.thickness *= data->thicknessReductionFactor;
+            value = checkIfCustomValue(axiom, data, data->thicknessReductionFactor, &i, &error, outErr);
+            data->turtle.thickness *= value;
             break;
         default:
             break;
