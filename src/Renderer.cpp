@@ -46,9 +46,11 @@ static const char* VERTEX_SHADER =
 static const char* FRAGMENT_SHADER =
 	"#version 330 core\n"
 	"out vec4 FragColor;\n"
+	"#extension GL_ARB_explicit_uniform_location : enable\n"
+	"layout(location = 1) uniform vec3 color;\n"
 	"void main()\n"
 	"{\n"
-	"	FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n"
+	"	FragColor = vec4(color, 1.0);\n"
 	"}\n";
 
 static const char* VERTEX_SHADER_C =
@@ -70,7 +72,7 @@ static const char* GEOMETRY_SHADER_C =
 	"layout(lines) in;\n"
 	"layout(triangle_strip, max_vertices = 32) out;\n"
 	"layout(location = 0) uniform mat4 MVP;\n"
-	"layout(location = 1) uniform float widthScale;\n"
+	"layout(location = 2) uniform float widthScale;\n"
 	"in VS_OUT {\n"
 	"	float width;\n"
 	"} gs_in[];\n"
@@ -115,6 +117,18 @@ static const char* FRAGMENT_SHADER_C =
 	"{\n"
 	"	FragColor = vec4(.5+.5*normal,1);\n"
 	"}\n";
+static const char* FRAGMENT_SHADER_C_COLOR =
+	"#version 330 core\n"
+	"#extension GL_ARB_explicit_uniform_location : enable\n"
+	"out vec4 FragColor;\n"
+	"layout(location = 1) uniform vec3 color;\n"
+	"in vec3 normal;\n"
+	"const vec3 lightSource = normalize(vec3(0.5,0.5,5));\n"
+	"void main()\n"
+	"{\n"
+	"	float d = 0.4f + 0.6f * max(0,dot(normal, lightSource));\n"
+	"	FragColor = vec4(d * color,1);\n"
+	"}\n";
 
 
 Renderer::Renderer() : mNumPrimitives(0)
@@ -126,7 +140,8 @@ Renderer::Renderer() : mNumPrimitives(0)
 	uint32_t fragmentS = loadShader(FRAGMENT_SHADER, GL_FRAGMENT_SHADER);
 	uint32_t vertexC = loadShader(VERTEX_SHADER_C, GL_VERTEX_SHADER);
 	uint32_t geometryC = loadShader(GEOMETRY_SHADER_C, GL_GEOMETRY_SHADER);
-	uint32_t fragmentC = loadShader(FRAGMENT_SHADER_C, GL_FRAGMENT_SHADER);
+	uint32_t fragmentCN = loadShader(FRAGMENT_SHADER_C, GL_FRAGMENT_SHADER);
+	uint32_t fragmentC = loadShader(FRAGMENT_SHADER_C_COLOR, GL_FRAGMENT_SHADER);
 	CheckGLError();
 	{
 		mLineProgram = glCreateProgram();
@@ -149,6 +164,18 @@ Renderer::Renderer() : mNumPrimitives(0)
 		//there should not be linking errors....
 		int32_t success;
 		glGetProgramiv(mCylinderProgram, GL_LINK_STATUS, &success);
+		assert(success);
+	}
+	{
+		mCylinderProgramNormal = glCreateProgram();
+		glAttachShader(mCylinderProgramNormal, vertexC);
+		glAttachShader(mCylinderProgramNormal, geometryC);
+		glAttachShader(mCylinderProgramNormal, fragmentCN);
+
+		glLinkProgram(mCylinderProgramNormal);
+		//there should not be linking errors....
+		int32_t success;
+		glGetProgramiv(mCylinderProgramNormal, GL_LINK_STATUS, &success);
 		assert(success);
 	}
 	CheckGLError();
@@ -209,16 +236,25 @@ void Renderer::render(const glm::mat4& projView, uint32_t mode) const
 	if (mode == 0) {
 		glUseProgram(mLineProgram);
 		glLineWidth(2);
+		glUniform3f(1, mColor.x, mColor.y, mColor.z);
+		CheckGLError();
+	}
+	else if(mode == 1) {
+		glUseProgram(mCylinderProgram);
+		CheckGLError();
+		glUniform3f(1, mColor.x, mColor.y, mColor.z);
+		glUniform1f(2, mCylinderWidthMultiplier);
 		CheckGLError();
 	}
 	else {
-		glUseProgram(mCylinderProgram);
+		glUseProgram(mCylinderProgramNormal);
 		CheckGLError();
-		glUniform1f(1, mCylinderWidthMultiplier);
+		glUniform1f(2, mCylinderWidthMultiplier);
 		CheckGLError();
 	}
 
 	glUniformMatrix4fv(0, 1, GL_FALSE, &projView[0][0]);
+
 	CheckGLError();
 
 

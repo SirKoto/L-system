@@ -119,6 +119,7 @@ void showParserInfo(lParser::LParserInfo* info) {
 
 void mainLoop(GLFWwindow* window) {
     glm::vec3 clear_color = glm::vec3(0.45f, 0.55f, 0.60f);
+    glm::vec3 plant_color = glm::vec3(0.1f, 0.9f, 0.2f);
     bool show_demo_window = true;
     lParser::LParserInfo parserInfo;
     lParser::LParserOut parserOut;
@@ -191,9 +192,9 @@ void mainLoop(GLFWwindow* window) {
 
             ImGui::Separator();
             ImGui::Text("Render Configuration");
-            const char* modes[] = { "Lines", "Cylinders" };
+            const char* modes[] = { "Lines", "Cylinders", "Cylinders Normal"};
             if (ImGui::BeginCombo("Render Mode", modes[renderMode])) {
-                for (uint32_t i = 0; i < 2; ++i) {
+                for (uint32_t i = 0; i < 3; ++i) {
                     const bool is_selected = (renderMode == i);
                     if (ImGui::Selectable(modes[i], is_selected)) {
                         renderMode = i;
@@ -205,7 +206,10 @@ void mainLoop(GLFWwindow* window) {
                 }
                 ImGui::EndCombo();
             }
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+            ImGui::ColorEdit3("clear color", (float*)&clear_color);
+            if (ImGui::ColorEdit3("Plant Color", (float*)&plant_color)) {
+                renderer.setPlantColor(plant_color);
+            }
             ImGui::InputFloat("Model Scale", &scale, 0.01f,0.0f, "%.5f");
             if (ImGui::InputFloat("Cylinder width scale", &cylinderWidthMultiplier, 0.01f, .0f, "%.3f", 0)) {
                 renderer.setCylinderScale(cylinderWidthMultiplier);
