@@ -10,6 +10,7 @@
 #include <cmath>
 #include <random>
 
+// Turtle definition
 struct Turtle {
     glm::vec3 pos = glm::vec3(0);
     glm::quat rotation = glm::quat(1.f, glm::vec3(0.f));
@@ -49,6 +50,7 @@ struct Turtle {
     }
 };
 
+// Data used when parsing
 struct ParseData {
     Turtle turtle;
     std::stack<Turtle> turtleStack;
@@ -68,6 +70,9 @@ struct ParseData {
     std::uniform_real_distribution<float> distr = std::uniform_real_distribution<float>(0.0, 1.0);
 };
 
+// Check if the current variable holds some parameter. i.e. F(15).
+// It can be a number or a constant. If no parameter is found, return defaultValue.
+// The index i_ is the updated index on the axiom string.
 float checkIfCustomValue(const std::string& axiom, const ParseData* data, float defaultValue, size_t* i_,
     bool* error, std::string* outErr) {
     size_t i = *i_;
@@ -105,6 +110,8 @@ float checkIfCustomValue(const std::string& axiom, const ParseData* data, float 
     return val;
 }
 
+// Process a single string axiom
+// This will be called recursively
 bool processRule(const std::string& axiom,
     const uint32_t depth,
     ParseData* data,
@@ -113,6 +120,7 @@ bool processRule(const std::string& axiom,
     lParser::Cylinder cylinder;
     bool error = false;
     float value;
+    // foreach of the characters in the mapping
     for (size_t i = 0; i < axiom.size(); ++i) {
         const char c = axiom[i];
 
@@ -180,11 +188,12 @@ bool processRule(const std::string& axiom,
             return false;
         }
 
+        // If the character is in some mapping, call recursivelly
         if (std::isalpha(c) && depth < data->maxDepth) {
             std::map<char, std::vector<ParseData::StockVal>>::const_iterator it = data->symbolMap->find(c);
             if (it != data->symbolMap->end()) {
                 const std::string* nextAxiom = &it->second.back().rule;
-
+                // If there is more than one, then we need to use rng to choose
                 if (it->second.size() > 1) {
                     // get random value and check
                     float val = data->distr(data->rng);
@@ -195,6 +204,7 @@ bool processRule(const std::string& axiom,
                         }
                     }
                 }
+                // process mapping
                 bool ret = processRule(*nextAxiom, depth + 1, data, outErr);
                 if (!ret) return false;
             }
@@ -209,9 +219,10 @@ bool lParser::parse(const LParserInfo& info, LParserOut* out, std::string* outEr
     assert(out != nullptr && outErr != nullptr);
 
     std::vector<Cylinder>& accum = out->cylinders;
-    accum.clear();
+    accum.clear();// erase previous output
     
     std::map<char, std::vector<ParseData::StockVal>> symbolMap;
+    // Store all rules
     for (const Rule& rule : info.rules) {
         if (rule.id.empty()) {
             *outErr = "There is a rule without ID";
@@ -241,6 +252,7 @@ bool lParser::parse(const LParserInfo& info, LParserOut* out, std::string* outEr
         }
     }
 
+    // Store all constants
     std::unordered_map<std::string, float> constantsMap;
     for (const auto& c : info.constants) {
         constantsMap.emplace(c.first, c.second);

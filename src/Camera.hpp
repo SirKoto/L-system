@@ -2,14 +2,18 @@
 
 #include <glm/glm.hpp>
 
+// Simple camera. Mostly extracted from LearnOpenGL
 class Camera {
 public:
 	Camera();
 
+	// Get input and update the camera state
 	void update();
 
+	// Get the Projection matrix mutliplied by the view matrix
 	glm::mat4 getProjView() const;
 
+	// Render some information into the UI
 	void renderImGui();
 
 private:

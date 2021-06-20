@@ -10,11 +10,15 @@ public:
 	Renderer();
 	~Renderer();
 
+	// Send to the GPU the cylinders to render
 	void setupPrimitivesToRender(const std::vector<lParser::Cylinder>& cylinders);
+	// Update the scale of the cylinders
 	void setCylinderScale(float scale) { mCylinderWidthMultiplier = scale; }
+	// Update the color of the plant
 	void setPlantColor(const glm::vec3& color) { mColor = color; }
 	// mode 0 = line
 	// mode 1 = cylinders
+	// mode 2 = cylinders shaded witht the normal
 	void render(const glm::mat4& projView, uint32_t mode) const;
 
 private:

@@ -101,6 +101,7 @@ void loadExampleFanTree(lParser::LParserInfo* info) {
 
 void showHelpText() {
     ImGui::TextWrapped("Look at the examples to see how are this concepts applied");
+    ImGui::TextWrapped("To change the rules and constants, you need to inspect the drop menu, and set the number of such elements to use.");
     ImGui::Separator();
     ImGui::Text("List of available operators:\n"
         "\tF\t\tdraw line forward\n"
@@ -116,12 +117,12 @@ void showHelpText() {
         "by setting the value im between parenthesis.\n"
         "For example: F(2)+(45.2)FF, advances 2 units, and rotates 45.22º, Then advances 1 unit two times.");
     ImGui::Separator();
-    ImGui::TextWrapped("Instead of using numbers on this parameters, you can use pre-defined constants");
-    ImGui::TextWrapped("Constants must start with a letter");
+    ImGui::TextWrapped("Instead of using numbers on this parameters, you can use pre-defined constants.");
+    ImGui::TextWrapped("Constants must start with a letter.");
     ImGui::Separator();
-    ImGui::TextWrapped("Rules need to be stablished with a single letter identifier, and a mapping");
+    ImGui::TextWrapped("Rules need to be stablished with a single letter identifier, and a mapping.");
     ImGui::TextWrapped("Also, all different rules with the same identifier need to have a probability "
-        " that adds up to 1. This probability will be sampled from a uniform real distribution");
+        " that adds up to 1. This probability will be sampled from a uniform real distribution.");
 }
 
 void showParserInfo(lParser::LParserInfo* info) {
@@ -217,6 +218,7 @@ void showParserInfo(lParser::LParserInfo* info) {
 }
 
 void mainLoop(GLFWwindow* window) {
+    // Context variables
     glm::vec3 clear_color = glm::vec3(0.45f, 0.55f, 0.60f);
     glm::vec3 plant_color = glm::vec3(0.1f, 0.9f, 0.2f);
     // bool show_demo_window = true;
@@ -234,10 +236,6 @@ void mainLoop(GLFWwindow* window) {
     while (!glfwWindowShouldClose(window))
     {
         // Poll and handle events (inputs, window resize, etc.)
-        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
-        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
-        // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
         glfwPollEvents();
 
         // Start the Dear ImGui frame
@@ -248,12 +246,14 @@ void mainLoop(GLFWwindow* window) {
        // if (show_demo_window)
        //     ImGui::ShowDemoWindow(&show_demo_window);
 
+        // Show configuration window
         if (ImGui::Begin("L-System")) {
             
             // ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
             if (ImGui::Button("Help")) {
                 show_help_window = true;
             }
+            // Show parsing configuration
             showParserInfo(&parserInfo);
             ImGui::Separator();
             bool parse = false;
@@ -261,6 +261,7 @@ void mainLoop(GLFWwindow* window) {
                 parse = true;
             }
             ImGui::Separator();
+            // List of all the pre setup examples
             if (ImGui::TreeNode("Examples")) {
                 if (ImGui::Button("Algae")) {
                     loadExampleAlgae(&parserInfo);
@@ -289,8 +290,10 @@ void mainLoop(GLFWwindow* window) {
                 ImGui::TreePop();
             }
 
+            // If button clicked, or example loaded... parse
             if (parse) {
                 bool ret = lParser::parse(parserInfo, &parserOut, &errorString);
+                // If returned error, open a new popup with it
                 if (!ret) {
                     ImGui::OpenPopup("Error PopUp");
                     //std::cerr << "Error when parsing: " << errorString << std::endl;
@@ -300,6 +303,7 @@ void mainLoop(GLFWwindow* window) {
                 renderer.setupPrimitivesToRender(parserOut.cylinders);
             }
 
+            // Show popup with error message
             if (ImGui::BeginPopup("Error PopUp")) {
                 ImGui::PushStyleColor(ImGuiCol_Text, ImVec4{ 1.0f,0.1f,0.1f,1.0f });
                 ImGui::Text("Parsing Error:");
@@ -309,6 +313,7 @@ void mainLoop(GLFWwindow* window) {
                 ImGui::EndPopup();
             }
 
+            // Configure the rendering of the application
             ImGui::Separator();
             ImGui::Text("Render Configuration");
             const char* modes[] = { "Lines", "Cylinders", "Cylinders Normal"};
@@ -369,8 +374,10 @@ void mainLoop(GLFWwindow* window) {
         glClearColor(clear_color.x, clear_color.y, clear_color.z, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // Render the generated model
         glEnable(GL_DEPTH_TEST);
         renderer.render(glm::scale(camera.getProjView(), glm::vec3(scale)), renderMode);
+        // Render UI
         glDisable(GL_DEPTH_TEST);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -386,7 +393,6 @@ int main() {
         if (!glfwInit())
             return 1;
 
-        const char* glsl_version = "#version 130";
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         glfwWindowHint(GLFW_SAMPLES, 4);
@@ -407,20 +413,19 @@ int main() {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO(); (void)io;
-        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
         // disable .ini file
         io.IniFilename = nullptr;
         io.FontAllowUserScaling = true; // zoom wiht ctrl + mouse wheel 
 
         // Setup Dear ImGui style
         ImGui::StyleColorsDark();
-        //ImGui::StyleColorsClassic();
          // Setup Platform/Renderer backends
         ImGui_ImplGlfw_InitForOpenGL(window, true);
-        ImGui_ImplOpenGL3_Init(glsl_version);
+        ImGui_ImplOpenGL3_Init("#version 130");
     }
 
+    // run program
     mainLoop(window);
 
     // Cleanup
