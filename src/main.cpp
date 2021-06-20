@@ -45,6 +45,60 @@ void loadExampleAlgae(lParser::LParserInfo* info) {
     info->thicknessReductionFactor = 0.98f;
 }
 
+void loadExampleTree(lParser::LParserInfo* info) {
+    info->axiom = "F(1.5)A";
+    info->constants = { {"div", 137.5f}, {"tru", 45.5f}, {"lat", 50.0f} };
+    info->rules = { {"A", "F[&(tru)[>B]]/(div)[>A]"},
+                    {"B", "F[-(lat)[>C]]/(div)[>A]"},
+                    {"C", "F[+(lat)[>B]]/(div)[>A]"} 
+    };
+    info->maxRecursionLevel = 8;
+    info->defaultAngle = 20.0f;
+    info->defaultThickness = 0.3f;
+    info->thicknessReductionFactor = 0.707f;
+}
+
+void loadExampleTreeSmooth(lParser::LParserInfo* info) {
+    info->axiom = "F(200)/(45)A";
+    info->constants = { {"d1", 94.74f}, {"d2", 132.63f}, {"a", 18.95f} };
+    info->rules = { {"A", ">F(50)[&(a)F(50)A]/(d1)[&(a)F(50)A]/(d2)[&(a)F(50)A]"}
+    };
+    info->maxRecursionLevel = 7;
+    info->defaultAngle = 20.0f;
+    info->defaultThickness =15.f;
+    info->thicknessReductionFactor = 0.707f;
+}
+
+void loadExamplePlantNoLeaves(lParser::LParserInfo* info) {
+info->axiom = "A";
+info->constants = { };
+info->rules = { {"A", "[&FL>A]/////[&FL>A]///////[&FL>A]"},
+                {"F", "S/////F"},
+                {"S", "FL"},
+                {"L", "[^^<[-f+f+f-|-f+f+f]]"}
+};
+info->maxRecursionLevel = 7;
+info->defaultAngle = 22.5f;
+info->defaultThickness = 0.3f;
+info->thicknessReductionFactor = 0.707f;
+}
+
+void loadExampleFanTree(lParser::LParserInfo* info) {
+    info->axiom = "X";
+    info->constants = { };
+    info->rules = { {"F", "F>"},
+                    {"X", 0.25f, "F-[\\(35)[X]+X]+F[+FX]-X"},
+                    {"X", 0.25f, "F-[[X]+X]+F[\\(15)+FX]-X"},
+                    {"X", 0.25f, "F-[/(15)[X]+X]+F[+FX]-X"},
+                    {"X", 0.25f, "F-[[X]+X]+F[/(30)+FX]-X"}
+    };
+    info->maxRecursionLevel = 5;
+    info->defaultAngle = 25.7f;
+    info->defaultThickness = 0.5f;
+    info->thicknessReductionFactor = 0.9f;
+    info->rngSeed = 15315;
+}
+
 void showParserInfo(lParser::LParserInfo* info) {
     ImGui::PushID("showParseInfo");
     int32_t step = 1;
@@ -187,6 +241,22 @@ void mainLoop(GLFWwindow* window) {
                 }
                 if (ImGui::Button("Simple Stochastic")) {
                     loadExampleSimpleRng(&parserInfo);
+                    parse = true;
+                }
+                if (ImGui::Button("Tree")) {
+                    loadExampleTree(&parserInfo);
+                    parse = true;
+                }
+                if (ImGui::Button("Tree Smooth")) {
+                    loadExampleTreeSmooth(&parserInfo);
+                    parse = true;
+                }
+                if (ImGui::Button("Plant that should have leaves")) {
+                    loadExamplePlantNoLeaves(&parserInfo);
+                    parse = true;
+                }
+                if (ImGui::Button("Flater plant")) {
+                    loadExampleFanTree(&parserInfo);
                     parse = true;
                 }
                 ImGui::TreePop();

@@ -121,7 +121,8 @@ bool processRule(const std::string& axiom,
         case 'F':
             cylinder.width = turtle.thickness;
             cylinder.init = turtle.pos;
-            turtle.advance(1.0f);
+            value = checkIfCustomValue(axiom, data, 1.0f, &i, &error, outErr);
+            turtle.advance(value);
             cylinder.end = turtle.pos;
             data->outCyls->push_back(cylinder);
             break;
@@ -157,7 +158,7 @@ bool processRule(const std::string& axiom,
             break;
         case ']':
             if (data->turtleStack.empty()) {
-                *outErr = "Can't find closing ]";
+                *outErr = "Too many closing ] symbols";
                 return false;
             }
             data->turtle = data->turtleStack.top();
