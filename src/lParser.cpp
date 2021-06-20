@@ -8,6 +8,7 @@
 #include <stack>
 #include <cstdlib>
 #include <cmath>
+#include <random>
 
 struct Turtle {
     glm::vec3 pos = glm::vec3(0);
@@ -55,8 +56,16 @@ struct ParseData {
     float defaultAngle;
     float thicknessReductionFactor;
     std::vector<lParser::Cylinder>* outCyls;
-    std::map<char, std::string>* symbolMap;
+
+    typedef struct StockVal {
+        float probability;
+        std::string rule;
+    } StockVal;
+    std::map<char, std::vector<StockVal>>* symbolMap;
     std::unordered_map<std::string, float>* constantsMap;
+
+    std::mt19937 rng;
+    std::uniform_real_distribution<float> distr = std::uniform_real_distribution<float>(0.0, 1.0);
 };
 
 float checkIfCustomValue(const std::string& axiom, const ParseData* data, float defaultValue, size_t* i_,
@@ -171,9 +180,21 @@ bool processRule(const std::string& axiom,
         }
 
         if (std::isalpha(c) && depth < data->maxDepth) {
-            std::map<char, std::string>::const_iterator it = data->symbolMap->find(c);
+            std::map<char, std::vector<ParseData::StockVal>>::const_iterator it = data->symbolMap->find(c);
             if (it != data->symbolMap->end()) {
-                bool ret = processRule(it->second, depth + 1, data, outErr);
+                const std::string* nextAxiom = &it->second.back().rule;
+
+                if (it->second.size() > 1) {
+                    // get random value and check
+                    float val = data->distr(data->rng);
+                    for (const ParseData::StockVal& e : it->second) {
+                        if (e.probability >= val) {
+                            nextAxiom = &e.rule;
+                            break;
+                        }
+                    }
+                }
+                bool ret = processRule(*nextAxiom, depth + 1, data, outErr);
                 if (!ret) return false;
             }
         }
@@ -189,7 +210,7 @@ bool lParser::parse(const LParserInfo& info, LParserOut* out, std::string* outEr
     std::vector<Cylinder>& accum = out->cylinders;
     accum.clear();
     
-    std::map<char, std::string> symbolMap;
+    std::map<char, std::vector<ParseData::StockVal>> symbolMap;
     for (const Rule& rule : info.rules) {
         if (rule.id.empty()) {
             *outErr = "There is a rule without ID";
@@ -200,7 +221,23 @@ bool lParser::parse(const LParserInfo& info, LParserOut* out, std::string* outEr
             return false;
         }
 
-        symbolMap.emplace(rule.id.front(), rule.mapping);
+        decltype(symbolMap)::iterator it = symbolMap.find(rule.id.front());
+        // if not exists... insert new
+        if (it == symbolMap.end()) {
+            symbolMap.insert({ rule.id.front(), { {rule.probability, rule.mapping} } });
+        }
+        else {
+            it->second.push_back({rule.probability + it->second.back().probability, rule.mapping});
+        }
+
+    }
+
+    // fix probabilities and check correct distributions
+    for (auto& it : symbolMap) {
+        if (std::abs(it.second.back().probability - 1.0f) > 1e-2) {
+            *outErr = "Probabilites do not add up to 1";
+            return false;
+        }
     }
 
     std::unordered_map<std::string, float> constantsMap;
@@ -216,5 +253,6 @@ bool lParser::parse(const LParserInfo& info, LParserOut* out, std::string* outEr
     parseData.constantsMap = &constantsMap;
     parseData.thicknessReductionFactor = info.thicknessReductionFactor;
     parseData.turtle.thickness = info.defaultThickness;
+    parseData.rng = std::mt19937(info.rngSeed); // set seed
     return processRule(info.axiom, 0, &parseData, outErr);
 }

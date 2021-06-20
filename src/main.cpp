@@ -76,11 +76,12 @@ void showParserInfo(lParser::LParserInfo* info) {
     ImGui::InputFloat("Default Angle", &info->defaultAngle);
     ImGui::InputFloat("Default Thickness", &info->defaultThickness);
     ImGui::InputFloat("Thickness reduction factor", &info->thicknessReductionFactor);
+    ImGui::InputInt("RNG Seed", &info->rngSeed);
     ImGui::InputText("Axiom", &info->axiom);
 
     if (ImGui::TreeNode("Rules")) {
         uint32_t size = (uint32_t)info->rules.size();
-        ImGui::InputScalar("##nConstants", ImGuiDataType_U32, (void*)&size, &step, nullptr, "%d");
+        ImGui::InputScalar("##nRules", ImGuiDataType_U32, (void*)&size, &step, nullptr, "%d");
         if (size != (uint32_t)info->rules.size()) {
             info->rules.resize(size);
         }
@@ -89,8 +90,9 @@ void showParserInfo(lParser::LParserInfo* info) {
             ImGuiTableFlags_BordersOuter |
             ImGuiTableFlags_BordersV |
             ImGuiTableFlags_ContextMenuInBody;
-        if (ImGui::BeginTable("TableRules", 2, flags)) {
+        if (ImGui::BeginTable("TableRules", 3, flags)) {
             ImGui::TableSetupColumn("Id", ImGuiTableColumnFlags_WidthFixed, ImGui::GetFontSize() * 2.f);
+            ImGui::TableSetupColumn("%", ImGuiTableColumnFlags_WidthFixed, ImGui::GetFontSize() * 3.f);
             ImGui::TableSetupColumn("Mapping");
             ImGui::TableHeadersRow();
             for (uint32_t i = 0; i < size; ++i) {
@@ -100,10 +102,14 @@ void showParserInfo(lParser::LParserInfo* info) {
                     ImGui::PushItemWidth(-FLT_MIN);
                     ImGui::TableSetColumnIndex(1);
                     ImGui::PushItemWidth(-FLT_MIN);
+                    ImGui::TableSetColumnIndex(2);
+                    ImGui::PushItemWidth(-FLT_MIN);
                 }
                 ImGui::PushID(i);
                 ImGui::TableSetColumnIndex(0);
                 ImGui::InputText("##idRule", &info->rules[i].id);
+                ImGui::TableNextColumn();
+                ImGui::InputFloat("##prob", &info->rules[i].probability);
                 ImGui::TableNextColumn();
                 ImGui::InputText("##mapRule", &info->rules[i].mapping);
                 ImGui::PopID();
@@ -120,7 +126,7 @@ void showParserInfo(lParser::LParserInfo* info) {
 void mainLoop(GLFWwindow* window) {
     glm::vec3 clear_color = glm::vec3(0.45f, 0.55f, 0.60f);
     glm::vec3 plant_color = glm::vec3(0.1f, 0.9f, 0.2f);
-    bool show_demo_window = true;
+    // bool show_demo_window = true;
     lParser::LParserInfo parserInfo;
     lParser::LParserOut parserOut;
     std::string errorString;
@@ -146,14 +152,12 @@ void mainLoop(GLFWwindow* window) {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
+       // if (show_demo_window)
+       //     ImGui::ShowDemoWindow(&show_demo_window);
 
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
         if (ImGui::Begin("L-System")) {
 
-            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+            // ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
 
             showParserInfo(&parserInfo);
             ImGui::Separator();

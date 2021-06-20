@@ -8,7 +8,11 @@ namespace lParser {
 
 struct Rule {
 	std::string id;
+	float probability = 1.0f;
 	std::string mapping;
+
+	Rule() = default;
+	Rule(const std::string& id, const std::string& map) : id(id), mapping(map) {}
 };
 
 struct LParserInfo
@@ -20,6 +24,7 @@ struct LParserInfo
 	float defaultAngle = 20.0f;
 	float defaultThickness = 0.05f;
 	float thicknessReductionFactor = 0.707f;
+	int32_t rngSeed = 15312;
 };
 
 struct Cylinder {
