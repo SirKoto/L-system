@@ -12,6 +12,7 @@ struct Rule {
 	std::string mapping;
 
 	Rule() = default;
+	Rule(const std::string& id, float p, const std::string& map) : id(id), probability(p), mapping(map) {}
 	Rule(const std::string& id, const std::string& map) : id(id), mapping(map) {}
 };
 

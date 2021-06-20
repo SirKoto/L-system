@@ -21,6 +21,20 @@ static void glfw_error_callback(int error, const char* description)
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
+void loadExampleSimpleRng(lParser::LParserInfo* info) {
+    info->axiom = "F";
+    info->constants = {};
+    info->rules = { {"F", 0.333f, "F[+F]F[-F]F"},
+                    {"F", 0.333f, "F[+F]F"},
+                    {"F", 0.333f, "F[-F]F"},
+    };
+    info->maxRecursionLevel = 6;
+    info->defaultAngle = 20.0f;
+    info->defaultThickness = 0.15f;
+    info->thicknessReductionFactor = 0.98f;
+    info->rngSeed = 15312;
+}
+
 void loadExampleAlgae(lParser::LParserInfo* info) {
     info->axiom = "F";
     info->constants = {};
@@ -171,6 +185,10 @@ void mainLoop(GLFWwindow* window) {
                     loadExampleAlgae(&parserInfo);
                     parse = true;
                 }
+                if (ImGui::Button("Simple Stochastic")) {
+                    loadExampleSimpleRng(&parserInfo);
+                    parse = true;
+                }
                 ImGui::TreePop();
             }
 
@@ -214,7 +232,7 @@ void mainLoop(GLFWwindow* window) {
             if (ImGui::ColorEdit3("Plant Color", (float*)&plant_color)) {
                 renderer.setPlantColor(plant_color);
             }
-            ImGui::InputFloat("Model Scale", &scale, 0.01f,0.0f, "%.5f");
+            ImGui::InputFloat("Model Scale", &scale, 0.005f,0.01f, "%.5f");
             if (ImGui::InputFloat("Cylinder width scale", &cylinderWidthMultiplier, 0.01f, .0f, "%.3f", 0)) {
                 renderer.setCylinderScale(cylinderWidthMultiplier);
             }
