@@ -99,6 +99,31 @@ void loadExampleFanTree(lParser::LParserInfo* info) {
     info->rngSeed = 15315;
 }
 
+void showHelpText() {
+    ImGui::TextWrapped("Look at the examples to see how are this concepts applied");
+    ImGui::Separator();
+    ImGui::Text("List of available operators:\n"
+        "\tF\t\tdraw line forward\n"
+        "\t+ / -\trotate Yaw by angle\n"
+        "\t& / ^\trotate Pitch by angle\n"
+        "\t/ / \\\trotate Roll by angle\n"
+        "\t> / <\tMultiply/Divide width\n"
+        "\t|\t\tGo Rotate by 180º\n"
+        "\t[ / ]\tPush/Pop turtle state"
+    );
+    ImGui::TextWrapped("The first 5 of these operations accept a floating point parameter, in order to "
+        "set a custom (non default) value to the operation. This can be done "
+        "by setting the value im between parenthesis.\n"
+        "For example: F(2)+(45.2)FF, advances 2 units, and rotates 45.22º, Then advances 1 unit two times.");
+    ImGui::Separator();
+    ImGui::TextWrapped("Instead of using numbers on this parameters, you can use pre-defined constants");
+    ImGui::TextWrapped("Constants must start with a letter");
+    ImGui::Separator();
+    ImGui::TextWrapped("Rules need to be stablished with a single letter identifier, and a mapping");
+    ImGui::TextWrapped("Also, all different rules with the same identifier need to have a probability "
+        " that adds up to 1. This probability will be sampled from a uniform real distribution");
+}
+
 void showParserInfo(lParser::LParserInfo* info) {
     ImGui::PushID("showParseInfo");
     int32_t step = 1;
@@ -195,6 +220,7 @@ void mainLoop(GLFWwindow* window) {
     glm::vec3 clear_color = glm::vec3(0.45f, 0.55f, 0.60f);
     glm::vec3 plant_color = glm::vec3(0.1f, 0.9f, 0.2f);
     // bool show_demo_window = true;
+    bool show_help_window = false;
     lParser::LParserInfo parserInfo;
     lParser::LParserOut parserOut;
     std::string errorString;
@@ -203,7 +229,6 @@ void mainLoop(GLFWwindow* window) {
     float scale = 1.0f;
     float cylinderWidthMultiplier = 1.0f;;
     uint32_t renderMode = 0;
-
     glEnable(GL_MULTISAMPLE);
 
     while (!glfwWindowShouldClose(window))
@@ -224,9 +249,11 @@ void mainLoop(GLFWwindow* window) {
        //     ImGui::ShowDemoWindow(&show_demo_window);
 
         if (ImGui::Begin("L-System")) {
-
+            
             // ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-
+            if (ImGui::Button("Help")) {
+                show_help_window = true;
+            }
             showParserInfo(&parserInfo);
             ImGui::Separator();
             bool parse = false;
@@ -323,6 +350,13 @@ void mainLoop(GLFWwindow* window) {
 
         }
         ImGui::End();
+
+        if (show_help_window) {
+            if (ImGui::Begin("Help", &show_help_window)) {
+                showHelpText();
+            }
+            ImGui::End();
+        }
 
         // Camera update
         camera.update();
