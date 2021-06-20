@@ -172,11 +172,21 @@ void mainLoop(GLFWwindow* window) {
             if (parse) {
                 bool ret = lParser::parse(parserInfo, &parserOut, &errorString);
                 if (!ret) {
-                    std::cerr << "Error when parsing: " << errorString << std::endl;
-                    errorString.clear();
+                    ImGui::OpenPopup("Error PopUp");
+                    //std::cerr << "Error when parsing: " << errorString << std::endl;
+                    //errorString.clear();
                 }
 
                 renderer.setupPrimitivesToRender(parserOut.cylinders);
+            }
+
+            if (ImGui::BeginPopup("Error PopUp")) {
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4{ 1.0f,0.1f,0.1f,1.0f });
+                ImGui::Text("Parsing Error:");
+                ImGui::Separator();
+                ImGui::Text(errorString.c_str());
+                ImGui::PopStyleColor();
+                ImGui::EndPopup();
             }
 
             ImGui::Separator();
