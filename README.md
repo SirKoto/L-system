@@ -4,13 +4,12 @@ By Pol Martín Garcia
 ## Compilation
 This project can be compiled using the provided `CMakeLists.txt` file. 
 
-The only library dependence, not already provided by the project, is GLFW3.
-
-In Ubuntu, GLFW3 can be easily installed with:
-```bash
-sudo apt-get install libglfw3
-sudo apt-get install libglfw3-dev
-```
+All the libraries used by the project are also provided, and will be compiled and linked as dependencies of the CMake project. These are:
+* GLFW 3
+* glad
+* Dear ImGui
+* glm
+* OpenGL
 
 Thus, the program can be compiled executed by running from the project directory:
 ```bash

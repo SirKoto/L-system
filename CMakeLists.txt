@@ -20,8 +20,6 @@ add_executable(${PROJECT_NAME}
 	${SOURCES}
 )
 
-find_package(glfw3 3.3 REQUIRED)
-
 add_subdirectory(libs)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
